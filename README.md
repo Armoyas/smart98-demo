@@ -6,13 +6,14 @@ SDD-based demo project for the **Smart98** AI workspace platform. This repositor
 
 ---
 
-## ⚡ Run it in 30 seconds
+##  Run it in 30 seconds
 
 The **goal-evolve** demo is the fastest way to feel Smart98: a goal with acceptance criteria, an agent that practices, and a self-evolving engine that mines rules from that practice — deterministically, with zero runtime dependencies.
 
 ```bash
 git clone https://github.com/Armoyas/smart98-demo
 cd smart98-demo/goal-evolve
+npm install         # only needed on Node < 22.6 (installs tsc)
 npm run demo        # 10 practice runs + evolution report
 npm test            # prove the engine's guarantees
 ```
@@ -20,13 +21,48 @@ npm test            # prove the engine's guarantees
 You will see four failed runs, six successful ones, and — with nothing hardcoded — the engine derives the winning habit on its own:
 
 ```
-RULE-xxxx [verification] 100% support=6
-  Read the relevant files, then edit in place, then run the tests
+RULE-4hnurt [planning] 100% support=6
+  Read the relevant files, edit in place, then run the tests
   Observed in 6 run(s), 6 of which achieved the goal (100% success rate).
   evidence: RUN-5, RUN-6, RUN-7, RUN-8, RUN-9, RUN-10
 ```
 
 Then open `dashboard/index.html` in a browser for the visual version: stat cards, run trace, evidence-backed rules, and the four Smart98 rule layers with blank-layer detection.
+
+### Node version support
+
+`npm run demo` works on **Node 18 and newer**. The launcher (`run.mjs`) detects what your Node can do:
+
+| Node version | What happens |
+| --- | --- |
+| **22.6+** | TypeScript sources run directly via native type stripping. No build step. |
+| **18 – 22.5** | Compiles once with `tsc` into `dist/`, then runs the JavaScript. Requires `npm install`. |
+
+Either way the command is the same. `run.mjs` prints which path it took.
+
+<details>
+<summary><b>Got <code>node: bad option: --experimental-strip-types</code>?</b></summary>
+
+Your Node is older than 22.6, so that flag does not exist. Two options:
+
+**Option A — install the build dependency (recommended):**
+
+```bash
+cd goal-evolve
+npm install     # installs typescript
+npm run demo    # run.mjs compiles to dist/ and runs it
+```
+
+**Option B — upgrade Node:**
+
+```bash
+nvm install 22 && nvm use 22
+npm run demo    # now runs the TS sources directly, no build
+```
+
+Check your version with `node --version`.
+
+</details>
 
 ---
 
@@ -53,11 +89,37 @@ Presenting live? [`goal-evolve/DEMO_SCRIPT.md`](goal-evolve/DEMO_SCRIPT.md) is a
 
 ---
 
+## 📁 Repository layout
+
+```
+smart98-demo/
+├── docs/
+│   ├── spec.md            user stories, FR-001…FR-013, SC-001…SC-008
+│   ├── plan.md            10 implementation steps with test criteria
+│   └── requirements.md    validation checklist / SDD gates
+│
+└── goal-evolve/           ← the runnable demo
+    ├── run.mjs            universal launcher (Node 18+)
+    ├── src/
+    │   ├── types.ts       Goal, Run, Rule, Observation, RuleLayer
+    │   ├── store.ts       append-only JSONL event log; state by reduction
+    │   ├── goal.ts        goal state machine + transition table
+    │   ├── evolve.ts      the two miners (habits + recoveries)
+    │   ├── engine.ts      wires runGoal() → Observation → evolveNow() → Rule[]
+    │   ── demo.ts        the 10-run practice scenario
+    ├── bin/demo.ts        CLI: colored report, --json, exit code = SC-006
+    ├── test/engine.test.ts  17 tests over the five guarantees
+    ├── dashboard/index.html single-file visual dashboard
+    └── DEMO_SCRIPT.md     4-minute talk track
+```
+
+---
+
 ## 📚 Documents
 
 | Document | Path | Purpose |
 | --- | --- | --- |
-| Feature Specification | [`docs/spec.md`](docs/spec.md) | User stories, functional requirements (FR-001…FR-012), success criteria (SC-001…SC-008), Given-When-Then scenarios |
+| Feature Specification | [`docs/spec.md`](docs/spec.md) | User stories, functional requirements (FR-001…FR-013), success criteria (SC-001…SC-008), Given-When-Then scenarios |
 | Implementation Plan | [`docs/plan.md`](docs/plan.md) | 10 steps over ~7.5 days, tasks, file lists, testing criteria, progress tracking |
 | Validation Checklist | [`docs/requirements.md`](docs/requirements.md) | Spec quality, technical completeness, SDD alignment, feature coverage, open items |
 
