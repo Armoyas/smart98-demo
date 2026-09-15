@@ -1,7 +1,0 @@
-/** Render a rule statement from an action sequence. */
-function statementFor(sequence: ActionKind[]): string {
-  const clauses = sequence.map((k) => PHRASE[k]);
-  const last = clauses.at(-1) ?? '';
-  if (clauses.length === 1) return capitalize(last);
-  return capitalize(clauses.slice(0, -1).join(', ') + ', then ' + last);
-}
