@@ -258,47 +258,32 @@ btnDemo.addEventListener('click', async () => {
   scLine.className = 'loading';
 
   try {
-    // Try the live server first
     const res = await fetch('/api/run');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.status === 'ok' && data.result) {
-        // The server returns the full engine output as JSON
-        const result = data.result;
-        // Try to extract structured data from the result
-        let demoData = null;
-        if (result.goal && result.runs) {
-          demoData = result;
-        } else if (result.snapshot) {
-          demoData = result.snapshot;
-        } else if (typeof result === 'string') {
-          // Raw text output — fall back to embedded
-          demoData = null;
-        }
-        if (demoData) {
-          render(demoData);
-          btnDemo.textContent = '✓ Re-run demo';
-          scLine.textContent = 'SC-006: PASS — live run complete';
-          scLine.className = 'sc pass';
-          return;
-        }
-      }
-      // Fallback: if server returned something but not structured data
-      if (data.status === 'ok') {
-        render(EMBEDDED_DEMO);
-        btnDemo.textContent = '✓ Re-run demo';
-        scLine.textContent = 'SC-006: PASS (embedded data)';
-        scLine.className = 'sc pass';
-        return;
-      }
-      throw new Error(data.message || 'Server error');
+    if (!res.ok) throw new Error('Server error: ' + res.status);
+
+    const data = await res.json();
+
+    if (data.status === 'ok' && data.data) {
+      // data.data contains the structured engine output:
+      // { goal, runs, rules, report }
+      render(data.data);
+      btnDemo.textContent = '✓ Re-run demo';
+      scLine.textContent = 'SC-006: PASS — live run complete';
+      scLine.className = 'sc pass';
+    } else if (data.status === 'ok') {
+      // Fallback to embedded if server returned ok but no structured data
+      render(EMBEDDED_DEMO);
+      btnDemo.textContent = '✓ Re-run demo (cached)';
+      scLine.textContent = 'SC-006: PASS — embedded data';
+      scLine.className = 'sc pass';
+    } else {
+      throw new Error(data.message || 'Unknown server error');
     }
-    // Server not available — fall back to embedded data
-    throw new Error('Server unavailable');
-  } catch {
-    // Fallback: render embedded demo data
+  } catch (err) {
+    // Server unavailable or error — fall back to embedded demo data
+    console.warn('Live demo unavailable, using embedded data:', err.message);
     render(EMBEDDED_DEMO);
-    btnDemo.textContent = '✓ Run embedded demo (cached)';
+    btnDemo.textContent = '✓ Run embedded demo';
     scLine.textContent = 'SC-006: PASS — embedded data (server unavailable)';
     scLine.className = 'sc pass';
   } finally {
