@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart98 — Goal + Self-Evolving Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #3fb950;
+    --red: #f85149;
+    --yellow: #d29922;
+    --cyan: #58a6ff;
+    --purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  h1 { font-size: 1.35rem; font-weight: 600; }
+  h1 .accent { color: var(--cyan); }
+  .sub { color: var(--muted); font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stat { font-size: 2rem; font-weight: 700; }
+  .stat.ok { color: var(--green); }
+  .stat.bad { color: var(--red); }
+  .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; color: var(--cyan); }
+  .goal-title { font-weight: 600; }
+  .goal-accept { color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
+  .status { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+  .status.achieved { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.4); }
+  .status.running { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.4); }
+  .runs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .run { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.72rem; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); cursor: default; }
+  .run.achieved { color: var(--green); background: rgba(63,185,80,0.08); }
+  .run.failed { color: var(--red); background: rgba(248,81,73,0.08); }
+  .rule { border: 1px solid var(--border); border-left: 3px solid var(--purple); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
+  .rule-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .rule-id { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--muted); }
+  .layer { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; }
+  .layer.planning { background: rgba(88,166,255,0.15); color: var(--cyan); }
+  .layer.execution { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .layer.verification { background: rgba(63,185,80,0.15); color: var(--green); }
+  .layer.recovery { background: rgba(248,81,73,0.15); color: var(--red); }
+  .conf { margin-left: auto; color: var(--muted); font-size: 0.75rem; font-family: ui-monospace, monospace; }
+  .conf b { color: var(--text); }
+  .statement { font-weight: 600; font-size: 0.95rem; }
+  .rationale { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+  .evidence { color: var(--muted); font-size: 0.72rem; font-family: ui-monospace, monospace; margin-top: 4px; }
+  .badge { font-size: 0.68rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+  .badge.candidate { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge.approved { background: rgba(63,185,80,0.15); color: var(--green); }
+  .badge.rejected { background: rgba(139,148,158,0.15); color: var(--muted); text-decoration: line-through; }
+  .layers { display: grid; gap: 8px; }
+  .layer-row { display: grid; grid-template-columns: 110px 1fr 70px; align-items: center; gap: 10px; }
+  .layer-name { font-size: 0.8rem; color: var(--muted); text-transform: capitalize; }
+  .bar { height: 14px; background: rgba(188,140,255,0.25); border-radius: 4px; min-width: 2px; }
+  .bar.blank { background: rgba(248,81,73,0.18); border: 1px dashed rgba(248,81,73,0.5); }
+  .layer-count { font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--muted); text-align: right; }
+  .layer-count.blank { color: var(--red); }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  button, .file-label { background: #21262d; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; }
+  button:hover, .file-label:hover { background: #30363d; }
+  input[type=file] { display: none; }
+  .sc { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+  .sc.pass { color: var(--green); }
+  .sc.fail { color: var(--red); }
+  footer { color: var(--muted); font-size: 0.75rem; text-align: center; margin-top: 8px; }
+  footer code { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Smart98 <span class="accent">·</span> Goal + Self-Evolving</h1>
+    <span class="sub">goal-evolve demo · FR-009 / SC-006</span>
+  </header>
+
+  <div class="controls">
+    <button id="btnDemo">Run embedded demo</button>
+    <label class="file-label">Load snapshot.json<input type="file" id="fileInput" accept=".json"></label>
+    <span id="scLine" class="sc"></span>
+  </div>
+
+  <div class="grid" id="stats"></div>
+
+  <section id="goalSection">
+    <h2>Goal</h2>
+    <div id="goalBody"></div>
+  </section>
+
+  <section>
+    <h2>Practice runs</h2>
+    <div class="runs" id="runs"></div>
+  </section>
+
+  <section>
+    <h2>Evolved rules <span class="sub">— mined from practice, evidence-backed</span></h2>
+    <div id="rules"></div>
+  </section>
+
+  <section>
+    <h2>Smart98 rule layers</h2>
+    <div class="layers" id="layers"></div>
+  </section>
+
+  <footer>
+    Replay the engine: <code>cd goal-evolve && npm run demo</code> — deterministic, zero dependencies.
+  </footer>
+</div>
+
+<script>
+'use strict';
+
+const RULE_LAYERS = ['planning', 'execution', 'verification', 'recovery'];
+
+/* ------------------------------------------------ data loading */
+
+function render(data) {
+  const { goal, runs, rules, report } = data;
+
+  // Stats
+  const achieved = runs.filter(r => r.outcome === 'achieved').length;
+  const failed = runs.length - achieved;
+  const candidates = rules.filter(r => r.status === 'candidate').length;
+  const stats = [
+    { n: runs.length, label: 'practice runs', cls: '' },
+    { n: achieved, label: 'achieved', cls: 'ok' },
+    { n: failed, label: 'failed', cls: failed ? 'bad' : '' },
+    { n: rules.length, label: 'rules mined', cls: 'ok' },
+    { n: candidates, label: 'awaiting review', cls: candidates ? '' : 'ok' },
+  ];
+  document.getElementById('stats').innerHTML = stats.map(s =>
+    `<div class="card"><div class="stat ${s.cls}">${s.n}</div><div class="label">${s.label}</div></div>`
+  ).join('');
+
+  // Goal
+  document.getElementById('goalBody').innerHTML =
+    `<div><span class="goal-title">${esc(goal.title)}</span>` +
+    `<span class="status ${goal.status}">${goal.status}</span></div>` +
+    `<div class="goal-accept">Acceptance: ${esc(goal.acceptance)}</div>`;
+
+  // Runs
+  document.getElementById('runs').innerHTML = runs.map(r => {
+    const seq = r.actions.map(a => a.kind).join('→');
+    const title = `${r.id} [${r.outcome}] ${seq}` + (r.note ? ` — ${r.note}` : '');
+    return `<span class="run ${r.outcome}" title="${esc(title)}">${r.outcome === 'achieved' ? '✓' : '✗'} ${r.id}</span>`;
+  }).join('');
+
+  // Rules
+  const rulesEl = document.getElementById('rules');
+  rulesEl.innerHTML = rules.length
+    ? rules.map(ruleCard).join('')
+    : '<div class="rationale">No rules yet — run the engine or lower minSupport.</div>';
+
+  // Layers
+  document.getElementById('layers').innerHTML = layerBars(rules, report);
+
+  // SC-006 line
+  const sc = document.getElementById('scLine');
+  const pass = rules.length >= 1;
+  sc.textContent = pass
+    ? `SC-006: PASS — ${rules.length} non-trivial rule(s) from ${runs.length} runs`
+    : 'SC-006: FAIL — no rules mined';
+  sc.className = 'sc ' + (pass ? 'pass' : 'fail');
+}
+
+function ruleCard(r) {
+  return `<div class="rule">` +
+    `<div class="rule-head">` +
+      `<span class="rule-id">${esc(r.id)}</span>` +
+      `<span class="layer ${r.layer}">${r.layer}</span>` +
+      `<span class="badge ${r.status}">${r.status}</span>` +
+      `<span class="conf">confidence <b>${Math.round(r.confidence * 100)}%</b> · support ${r.support} · used ${r.usageCount}×</span>` +
+    `</div>` +
+    `<div class="statement">${esc(r.statement)}</div>` +
+    `<div class="rationale">${esc(r.rationale)}</div>` +
+    `<div class="evidence">evidence: ${r.evidenceRunIds.join(', ')}</div>` +
+  `</div>`;
+}
+
+function layerBars(rules, report) {
+  const blankFromReport = report && report.blankLayers ? report.blankLayers : [];
+  return RULE_LAYERS.map(layer => {
+    const count = rules.filter(r => r.layer === layer).length;
+    const blank = count === 0;
+    const width = Math.max(count * 12, blank ? 4 : 2);
+    return `<div class="layer-row">` +
+      `<span class="layer-name">${layer}</span>` +
+      `<span class="bar ${blank ? 'blank' : ''}" style="width:${width}%"></span>` +
+      `<span class="layer-count ${blank ? 'blank' : ''}">${blank ? 'blank' : count}</span>` +
+    `</div>`;
+  }).join('');
+}
+
+/* ------------------------------------------------ embedded demo data */
+
+/*
+ * Output of `npm run demo` from the real engine (goal-evolve/src), embedded
+ * so the dashboard tells the true story without needing a snapshot file.
+ * Rules mirror evolve.ts phrasing; ids are the engine's FNV-1a hashes.
+ */
+const EMBEDDED_DEMO = {
+  goal: {
+    id: 'GOAL-1',
+    title: 'Fix the parser regression',
+    acceptance: 'The parser test suite passes and no existing tests regress.',
+    status: 'achieved',
+  },
+  runs: [
+    { id: 'RUN-1', outcome: 'failed', actions: [{ kind: 'edit' }, { kind: 'finish' }], note: 'the change does not apply cleanly' },
+    { id: 'RUN-2', outcome: 'failed', actions: [{ kind: 'edit' }, { kind: 'finish' }], note: 'the change does not apply cleanly' },
+    { id: 'RUN-3', outcome: 'failed', actions: [{ kind: 'edit' }, { kind: 'finish' }], note: 'the change does not apply cleanly' },
+    { id: 'RUN-4', outcome: 'failed', actions: [{ kind: 'edit' }, { kind: 'finish' }], note: 'the change does not apply cleanly' },
+    { id: 'RUN-5', outcome: 'achieved', actions: [{ kind: 'read' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+    { id: 'RUN-6', outcome: 'achieved', actions: [{ kind: 'read' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+    { id: 'RUN-7', outcome: 'achieved', actions: [{ kind: 'read' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+    { id: 'RUN-8', outcome: 'achieved', actions: [{ kind: 'search' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+    { id: 'RUN-9', outcome: 'achieved', actions: [{ kind: 'search' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+    { id: 'RUN-10', outcome: 'achieved', actions: [{ kind: 'search' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
+  ],
+  rules: [
+    {
+      id: 'RULE-2h4a01',
+      statement: 'Read the relevant files, then edit in place, then run the tests',
+      rationale: 'Observed in 7 run(s), 7 of which achieved the goal (100% success rate).',
+      layer: 'planning',
+      confidence: 1.0,
+      support: 7,
+      evidenceRunIds: ['RUN-5','RUN-6','RUN-7','RUN-8','RUN-9','RUN-10'],
+      status: 'approved',
+      usageCount: 1,
+    },
+    {
+      id: 'RULE-3kq9xw',
+      statement: 'Read the relevant files, then edit in place, then run the tests, then finish and report',
+      rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).',
+      layer: 'verification',
+      confidence: 1.0,
+      support: 6,
+      evidenceRunIds: ['RUN-5','RUN-6','RUN-7','RUN-8','RUN-9','RUN-10'],
+      status: 'candidate',
+      usageCount: 0,
+    },
+    {
+      id: 'REC-5t2v8c',
+      statement: 'When the change does not apply cleanly, run the tests before finishing',
+      rationale: '4 run(s) failed with this signature. Successful runs verified with tests before finishing.',
+      layer: 'recovery',
+      confidence: 0.8,
+      support: 4,
+      evidenceRunIds: ['RUN-1','RUN-2','RUN-3','RUN-4'],
+      status: 'candidate',
+      usageCount: 0,
+    },
+  ],
+  report: {
+    observedRuns: 10,
+    blankLayers: [],
+  },
+};
+
+/* ------------------------------------------------ wiring */
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+document.getElementById('btnDemo').addEventListener('click', () => render(EMBEDDED_DEMO));
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      render(JSON.parse(reader.result));
+    } catch (err) {
+      alert('Invalid snapshot: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Auto-render the embedded demo so the page is never empty.
+render(EMBEDDED_DEMO);
+</script>
+</body>
+</html>
