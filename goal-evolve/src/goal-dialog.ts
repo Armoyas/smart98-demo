@@ -13,9 +13,10 @@
  *   - Step-by-step flow (Next button)
  */
 
-import type { Goal } from './goal.ts';
+import type { Goal } from './types.ts';
 import { createGoal, GoalError } from './goal.ts';
 import type { Domain } from './domain.ts';
+import { Store } from './store.ts';
 
 export interface DialogState {
   step: 'title' | 'criteria' | 'confirm' | 'done';
@@ -103,15 +104,16 @@ export function nextStep(state: DialogState): { state: DialogState; canProceed: 
     };
   }
 
-  const nextStep: DialogState['step'] = {
+  const stepMap: Record<DialogState['step'], DialogState['step']> = {
     title: 'criteria',
     criteria: 'confirm',
     confirm: 'done',
     done: 'done',
-  }[state.step];
+  };
+  const nextStepValue: DialogState['step'] = stepMap[state.step];
 
   return {
-    state: { ...state, step: nextStep, errors: [] },
+    state: { ...state, step: nextStepValue, errors: [] },
     canProceed: true,
     blockers: [],
   };
@@ -154,7 +156,7 @@ export function generateAcceptanceAI(title: string, description: string): string
 
 /** Create an actual Goal from dialog state. */
 export function submitGoal(
-  store: { append: (type: string, payload: unknown) => void },
+  store: Store,
   state: DialogState,
 ): Goal {
   const errors = validateDialog(state);
