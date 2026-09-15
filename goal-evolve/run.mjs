@@ -40,14 +40,18 @@ function run(cmd, args) {
 
 function ensureBuilt() {
   // The demo build and the test build produce different artefacts, so each
-  // command checks for the file *it* needs. Checking only dist/bin/demo.js
+  // command checks for the files *it* needs. Checking only dist/bin/demo.js
   // made `npm run demo && npm test` fail with
   // "Could not find .../dist/test/".
   const needed =
     command === 'test'
-      ? join(here, 'dist', 'test', 'engine.test.js')
-      : join(here, 'dist', 'bin', 'demo.js');
-  if (existsSync(needed)) return;
+      ? [
+          join(here, 'dist', 'test', 'engine.test.js'),
+          join(here, 'dist', 'test', 'domain.test.js'),
+          join(here, 'dist', 'test', 'goal-dialog.test.js'),
+        ].every(existsSync)
+      : existsSync(join(here, 'dist', 'bin', 'demo.js'));
+  if (needed) return;
 
   console.log('Node ' + process.versions.node + ' cannot strip types natively.');
   console.log('Compiling TypeScript once with tsc...\n');
