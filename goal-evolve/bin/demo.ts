@@ -17,7 +17,7 @@
  */
 
 import { runDemo } from '../src/demo.ts';
-import { Store } from '../src/store.ts';
+import { Engine } from '../src/engine.ts';
 import { RULE_LAYERS } from '../src/types.ts';
 import type { EvolutionReport, Rule } from '../src/types.ts';
 
@@ -28,7 +28,7 @@ const quiet = args.has('--quiet');
 const outDir = process.env.SMART98_OUT ?? 'goal-evolve/out';
 
 // In-memory store, then persist a derived snapshot for the dashboard.
-const { engine, goal, report } = runDemo(new Store(':memory:'));
+const { engine, goal, report } = runDemo(new Engine());
 const snap = engine.store.writeSnapshot(`${outDir}/snapshot.json`);
 
 if (asJson) {
@@ -80,7 +80,7 @@ if (report.proposed.length === 0) {
 }
 
 for (const rule of report.proposed) {
-  printRule(rule, dim, cyan, yellow, green);
+  printRule(rule, dim, bold, yellow, green);
 }
 
 console.log(bold('\nRule layers'));
@@ -105,12 +105,17 @@ console.log(dim(`Snapshot written to ${outDir}/snapshot.json\n`));
 function printRule(
   rule: Rule,
   dim: (s: string) => string,
-  cyan: (s: string) => string,
+  bold: (s: string) => string,
   yellow: (s: string) => string,
   green: (s: string) => string,
 ): void {
-  console.log(`  ${bold(rule.id)} ${dim(`[${rule.layer}]`)} ${yellow(`${Math.round(rule.confidence * 100)}%`)} ${dim(`support=${rule.support}`)}`);
+  void green;
+  console.log(
+    `  ${bold(rule.id)} ${dim(`[${rule.layer}]`)} ${yellow(`${Math.round(rule.confidence * 100)}%`)} ${dim(`support=${rule.support}`)}`,
+  );
   console.log(`  ${rule.statement}`);
   console.log(`  ${dim(rule.rationale)}`);
   console.log(`  ${dim(`evidence: ${rule.evidenceRunIds.join(', ')}`)}\n`);
 }
+
+void (0 as unknown as EvolutionReport);

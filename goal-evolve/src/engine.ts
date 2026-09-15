@@ -7,7 +7,7 @@
  * into rules. Nothing is hardcoded; the rules at the end are a function of
  * the runs at the beginning.
  *
- *   runGoal()  ──▶ Observation ──▶ Store
+ *   runGoal()  ─▶ Observation ─▶ Store
  *                                   │
  *   evolveNow() ◀── observations ───┘ ──▶ Rule[]
  */
@@ -100,10 +100,12 @@ export class Engine {
     const mined = evolve(snap.observations, options);
 
     const proposed: Rule[] = [];
+    const stampedAt = new Date().toISOString();
     for (const rule of mined) {
       if (existing.has(rule.id)) continue;
-      this.store.append('rule.proposed', rule, rule.createdAt);
-      proposed.push(rule);
+      const stamped: Rule = { ...rule, createdAt: stampedAt };
+      this.store.append('rule.proposed', stamped, stampedAt);
+      proposed.push(stamped);
     }
 
     const allRules = [...snap.rules, ...proposed];

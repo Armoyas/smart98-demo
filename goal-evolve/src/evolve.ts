@@ -84,12 +84,13 @@ function layerFor(sequence: ActionKind[]): RuleLayer {
 /** Render a rule statement from an action sequence. */
 function statementFor(sequence: ActionKind[]): string {
   const clauses = sequence.map((k) => PHRASE[k]);
-  if (clauses.length === 1) return capitalize(clauses[0]);
-  return capitalize(clauses.slice(0, -1).join(', ') + ', then ' + clauses.at(-1));
+  const last = clauses.at(-1) ?? '';
+  if (clauses.length === 1) return capitalize(last);
+  return capitalize(clauses.slice(0, -1).join(', ') + ', then ' + last);
 }
 
 function capitalize(s: string): string {
-  return s.length === 0 ? s : s[0].toUpperCase() + s.slice(1);
+  return s.length === 0 ? s : s[0]!.toUpperCase() + s.slice(1);
 }
 
 /** Stable id derived from the rule's content — re-running never duplicates. */
@@ -100,6 +101,17 @@ function ruleId(prefix: string, key: string): string {
     hash = Math.imul(hash, 16777619);
   }
   return `${prefix}-${(hash >>> 0).toString(36)}`;
+}
+
+/**
+ * Collapse consecutive duplicate kinds (e.g. read,read -> read).
+ *
+ * Without this, an agent that reads two files in a row yields the degenerate
+ * rule "Read the relevant files, then read the relevant files" — technically
+ * true, useless as advice.
+ */
+function collapseRuns(seq: ActionKind[]): ActionKind[] {
+  return seq.filter((k, i) => i === 0 || k !== seq[i - 1]);
 }
 
 /** Every contiguous subsequence of `seq` with length in [min, max]. */
@@ -183,7 +195,8 @@ function mineHabits(observations: Observation[], opts: ResolvedOptions): Rule[] 
       evidenceRunIds: [...entry.runs].sort(),
       status: 'candidate',
       usageCount: 0,
-      createdAt: new Date().toISOString(),
+      // Stamped by the engine at persistence time, keeping mining pure.
+      createdAt: '',
     });
   }
 
@@ -231,7 +244,8 @@ function mineRecoveries(observations: Observation[], opts: ResolvedOptions): Rul
       evidenceRunIds: members.map((m) => m.runId).sort(),
       status: 'candidate',
       usageCount: 0,
-      createdAt: new Date().toISOString(),
+      // Stamped by the engine at persistence time, keeping mining pure.
+      createdAt: '',
     });
   }
 
@@ -265,9 +279,17 @@ function inferRemedy(failures: Observation[], successes: Observation[]): string 
  */
 export function evolve(observations: Observation[], options: EvolveOptions = {}): Rule[] {
   const opts = resolve(options);
+
+  // Normalize before mining so adjacent repeats do not produce degenerate
+  // rules. Mining stays a pure function of its input.
+  const normalized = observations.map((o) => ({ ...o, sequence: collapseRuns(o.sequence) }));
+
   const merged = new Map<string, Rule>();
 
-  for (const rule of [...mineHabits(observations, opts), ...mineRecoveries(observations, opts)]) {
+  for (const rule of [
+    ...mineHabits(normalized, opts),
+    ...mineRecoveries(normalized, opts),
+  ]) {
     const existing = merged.get(rule.id);
     // Keep the higher-confidence variant if the same rule is mined twice.
     if (!existing || rule.confidence > existing.confidence) merged.set(rule.id, rule);
