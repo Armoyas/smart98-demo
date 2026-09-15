@@ -42,7 +42,7 @@ function ensureBuilt() {
   // The demo build and the test build produce different artefacts, so each
   // command checks for the file *it* needs. Checking only dist/bin/demo.js
   // made `npm run demo && npm test` fail with
-  // "Could not find .../dist/test/engine.test.js".
+  // "Could not find .../dist/test/".
   const needed =
     command === 'test'
       ? join(here, 'dist', 'test', 'engine.test.js')
@@ -75,7 +75,7 @@ function ensureBuilt() {
       '--rewriteRelativeImportExtensions',
       '--skipLibCheck',
       'src/types.ts', 'src/store.ts', 'src/goal.ts', 'src/evolve.ts',
-      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts', 'test/engine.test.ts',
+      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts', 'test/engine.test.ts', 'test/domain.test.ts', 'test/goal-dialog.test.ts',
     ],
     { stdio: 'inherit', cwd: here },
   );
@@ -93,10 +93,10 @@ if (command === 'demo') {
   }
 } else if (command === 'test') {
   if (CAN_STRIP_TYPES) {
-    run(process.execPath, ['--experimental-strip-types', '--test', 'test/engine.test.ts']);
+    run(process.execPath, ['--experimental-strip-types', '--test', 'test/engine.test.ts', 'test/domain.test.ts', 'test/goal-dialog.test.ts']);
   } else {
     ensureBuilt();
-    run(process.execPath, ['--test', 'dist/test/engine.test.js']);
+    run(process.execPath, ['--test', 'dist/test/engine.test.js', 'dist/test/domain.test.js', 'dist/test/goal-dialog.test.js']);
   }
 } else {
   console.error(`Unknown command: ${command}. Use "demo" or "test".`);
