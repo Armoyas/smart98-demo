@@ -39,7 +39,15 @@ function run(cmd, args) {
 }
 
 function ensureBuilt() {
-  if (existsSync(join(here, 'dist', 'bin', 'demo.js'))) return;
+  // The demo build and the test build produce different artefacts, so each
+  // command checks for the file *it* needs. Checking only dist/bin/demo.js
+  // made `npm run demo && npm test` fail with
+  // "Could not find .../dist/test/engine.test.js".
+  const needed =
+    command === 'test'
+      ? join(here, 'dist', 'test', 'engine.test.js')
+      : join(here, 'dist', 'bin', 'demo.js');
+  if (existsSync(needed)) return;
 
   console.log('Node ' + process.versions.node + ' cannot strip types natively.');
   console.log('Compiling TypeScript once with tsc...\n');
@@ -55,6 +63,8 @@ function ensureBuilt() {
     process.exit(1);
   }
 
+  // Compile the full source set every time, so running `demo` then `test`
+  // never leaves the second command without its artefact.
   const built = spawnSync(
     tsc,
     [
@@ -64,9 +74,8 @@ function ensureBuilt() {
       '--moduleResolution', 'nodenext',
       '--rewriteRelativeImportExtensions',
       '--skipLibCheck',
-      ...(command === 'test' ? ['test/engine.test.ts'] : []),
       'src/types.ts', 'src/store.ts', 'src/goal.ts', 'src/evolve.ts',
-      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts',
+      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts', 'test/engine.test.ts',
     ],
     { stdio: 'inherit', cwd: here },
   );

@@ -16,6 +16,9 @@
  * Exit code 0 iff SC-006 holds: at least one non-trivial rule was proposed.
  */
 
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { runDemo } from '../src/demo.ts';
 import { Engine } from '../src/engine.ts';
 import { RULE_LAYERS } from '../src/types.ts';
@@ -25,11 +28,29 @@ const args = new Set(process.argv.slice(2));
 const asJson = args.has('--json');
 const quiet = args.has('--quiet');
 
-const outDir = process.env.SMART98_OUT ?? 'goal-evolve/out';
+// Resolve relative to this package, not the caller's cwd. Hardcoding
+// 'goal-evolve/out' meant running from inside goal-evolve/ wrote to
+// goal-evolve/goal-evolve/out/.
+//
+// `import.meta.url` points at bin/ (TS sources) or dist/bin/ (compiled), so
+// walk up until we find package.json — that is the package root either way.
+function findPackageRoot(start: string): string {
+  let dir = start;
+  for (let i = 0; i < 5; i++) {
+    if (existsSync(join(dir, 'package.json'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return start;
+}
+
+const pkgRoot = findPackageRoot(dirname(fileURLToPath(import.meta.url)));
+const outDir = process.env.SMART98_OUT ?? join(pkgRoot, 'out');
 
 // In-memory store, then persist a derived snapshot for the dashboard.
 const { engine, goal, report } = runDemo(new Engine());
-const snap = engine.store.writeSnapshot(`${outDir}/snapshot.json`);
+const snap = engine.store.writeSnapshot(join(outDir, 'snapshot.json'));
 
 if (asJson) {
   process.stdout.write(
@@ -80,7 +101,7 @@ if (report.proposed.length === 0) {
 }
 
 for (const rule of report.proposed) {
-  printRule(rule, dim, bold, yellow, green);
+  printRule(rule, dim, bold, yellow);
 }
 
 console.log(bold('\nRule layers'));
@@ -100,16 +121,14 @@ if (report.blankLayers.length === 0) {
 console.log(
   `\n${bold('SC-006')}: ${green('PASS')} — ${report.proposed.length} non-trivial rule(s) from ${report.observedRuns} practice runs`,
 );
-console.log(dim(`Snapshot written to ${outDir}/snapshot.json\n`));
+console.log(dim(`Snapshot written to ${join(outDir, 'snapshot.json')}\n`));
 
 function printRule(
   rule: Rule,
   dim: (s: string) => string,
   bold: (s: string) => string,
   yellow: (s: string) => string,
-  green: (s: string) => string,
 ): void {
-  void green;
   console.log(
     `  ${bold(rule.id)} ${dim(`[${rule.layer}]`)} ${yellow(`${Math.round(rule.confidence * 100)}%`)} ${dim(`support=${rule.support}`)}`,
   );
