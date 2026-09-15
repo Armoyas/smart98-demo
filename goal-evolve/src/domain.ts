@@ -10,7 +10,7 @@
  *   FR-007  Shareable, re-openable across sessions
  */
 
-import type { Goal } from './goal.ts';
+import type { Goal } from './types.ts';
 
 export type DomainStatus = 'draft' | 'active' | 'archived';
 
