@@ -1,0 +1,19 @@
+{
+  "name": "smart98-goal-evolve",
+  "version": "0.1.0",
+  "description": "Smart98 demo — goal lifecycle + self-evolving rule engine. Zero dependencies.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "smart98-demo": "./bin/demo.ts"
+  },
+  "scripts": {
+    "demo": "node --experimental-strip-types bin/demo.ts",
+    "demo:json": "node --experimental-strip-types bin/demo.ts --json",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  }
+}
