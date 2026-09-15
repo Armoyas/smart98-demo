@@ -125,7 +125,7 @@ void test('isValid: invalid state → false', () => {
 // ---------------------------------------------------------------- flow
 
 void test('nextStep: valid title → advance to criteria', () => {
-  const state = { ...createInitialState(), title: 'Fix parser' };
+  const state = { ...createInitialState(), title: 'Fix parser', acceptance: 'Tests pass.' };
   const result = nextStep(state);
   assert.equal(result.canProceed, true);
   assert.equal(result.state.step, 'criteria');

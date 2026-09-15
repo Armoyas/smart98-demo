@@ -9,7 +9,8 @@
     "demo:json": "node run.mjs demo --json",
     "test": "node run.mjs test",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "serve": "node server.mjs"
   },
   "engines": {
     "node": ">=18"

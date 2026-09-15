@@ -177,7 +177,7 @@ void test('generateFromDescription: detects accuracy keywords', () => {
 });
 
 void test('generateFromDescription: fallback when no keywords match', () => {
-  const result = generateFromDescription('Do the thing properly and completely.');
+  const result = generateFromDescription('Do the thing properly and thoroughly.');
   assert.ok(result.suggestedAcceptance.includes('explicit acceptance criteria'));
 });
 

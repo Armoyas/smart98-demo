@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // SPDX-License-Identifier: MIT
 /**
  * Smart98 Dashboard — local HTTP server.
