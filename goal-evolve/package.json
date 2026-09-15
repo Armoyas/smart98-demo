@@ -4,19 +4,18 @@
   "description": "Smart98 demo — goal lifecycle + self-evolving rule engine. Zero runtime dependencies.",
   "type": "module",
   "private": true,
-  "bin": {
-    "smart98-demo": "./bin/demo.ts"
-  },
   "scripts": {
-    "demo": "node --experimental-strip-types bin/demo.ts",
-    "demo:json": "node --experimental-strip-types bin/demo.ts --json",
-    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "demo": "node run.mjs demo",
+    "demo:json": "node run.mjs demo --json",
+    "test": "node run.mjs test",
+    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "engines": {
-    "node": ">=22.6.0"
+    "node": ">=18"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
   }
 }
