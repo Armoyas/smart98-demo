@@ -30,7 +30,7 @@
   h1 { font-size: 1.35rem; font-weight: 600; }
   h1 .accent { color: var(--cyan); }
   .sub { color: var(--muted); font-size: 0.85rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
   .stat { font-size: 2rem; font-weight: 700; }
   .stat.ok { color: var(--green); }
@@ -97,7 +97,7 @@
 
   <div class="grid" id="stats"></div>
 
-  <section id="goalSection">
+  <section>
     <h2>Goal</h2>
     <div id="goalBody"></div>
   </section>
@@ -118,7 +118,7 @@
   </section>
 
   <footer>
-    Replay the engine: <code>cd goal-evolve && npm run demo</code> — deterministic, zero dependencies.
+    Replay the engine: <code>cd goal-evolve && npm run demo</code> — deterministic, zero runtime dependencies.
   </footer>
 </div>
 
@@ -127,49 +127,58 @@
 
 const RULE_LAYERS = ['planning', 'execution', 'verification', 'recovery'];
 
-/* ------------------------------------------------ data loading */
+/* ------------------------------------------------ rendering */
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 
 function render(data) {
-  const { goal, runs, rules, report } = data;
+  const goal = data.goal;
+  const runs = data.runs || [];
+  const rules = data.rules || [];
+  const report = data.report || {};
 
-  // Stats
   const achieved = runs.filter(r => r.outcome === 'achieved').length;
   const failed = runs.length - achieved;
   const candidates = rules.filter(r => r.status === 'candidate').length;
-  const stats = [
+
+  document.getElementById('stats').innerHTML = [
     { n: runs.length, label: 'practice runs', cls: '' },
     { n: achieved, label: 'achieved', cls: 'ok' },
     { n: failed, label: 'failed', cls: failed ? 'bad' : '' },
     { n: rules.length, label: 'rules mined', cls: 'ok' },
     { n: candidates, label: 'awaiting review', cls: candidates ? '' : 'ok' },
-  ];
-  document.getElementById('stats').innerHTML = stats.map(s =>
-    `<div class="card"><div class="stat ${s.cls}">${s.n}</div><div class="label">${s.label}</div></div>`
-  ).join('');
+  ].map(s => `<div class="card"><div class="stat ${s.cls}">${s.n}</div><div class="label">${s.label}</div></div>`).join('');
 
-  // Goal
   document.getElementById('goalBody').innerHTML =
     `<div><span class="goal-title">${esc(goal.title)}</span>` +
-    `<span class="status ${goal.status}">${goal.status}</span></div>` +
+    `<span class="status ${esc(goal.status)}">${esc(goal.status)}</span></div>` +
     `<div class="goal-accept">Acceptance: ${esc(goal.acceptance)}</div>`;
 
-  // Runs
   document.getElementById('runs').innerHTML = runs.map(r => {
     const seq = r.actions.map(a => a.kind).join('→');
     const title = `${r.id} [${r.outcome}] ${seq}` + (r.note ? ` — ${r.note}` : '');
-    return `<span class="run ${r.outcome}" title="${esc(title)}">${r.outcome === 'achieved' ? '✓' : '✗'} ${r.id}</span>`;
+    return `<span class="run ${r.outcome}" title="${esc(title)}">${r.outcome === 'achieved' ? '✓' : '✗'} ${esc(r.id)}</span>`;
   }).join('');
 
-  // Rules
-  const rulesEl = document.getElementById('rules');
-  rulesEl.innerHTML = rules.length
+  document.getElementById('rules').innerHTML = rules.length
     ? rules.map(ruleCard).join('')
     : '<div class="rationale">No rules yet — run the engine or lower minSupport.</div>';
 
-  // Layers
-  document.getElementById('layers').innerHTML = layerBars(rules, report);
+  document.getElementById('layers').innerHTML = RULE_LAYERS.map(layer => {
+    const count = rules.filter(r => r.layer === layer).length;
+    const blank = count === 0;
+    const width = Math.max(count * 14, blank ? 4 : 2);
+    return `<div class="layer-row">` +
+      `<span class="layer-name">${layer}</span>` +
+      `<span class="bar ${blank ? 'blank' : ''}" style="width:${width}%"></span>` +
+      `<span class="layer-count ${blank ? 'blank' : ''}">${blank ? 'blank' : count}</span>` +
+    `</div>`;
+  }).join('');
 
-  // SC-006 line
   const sc = document.getElementById('scLine');
   const pass = rules.length >= 1;
   sc.textContent = pass
@@ -182,36 +191,23 @@ function ruleCard(r) {
   return `<div class="rule">` +
     `<div class="rule-head">` +
       `<span class="rule-id">${esc(r.id)}</span>` +
-      `<span class="layer ${r.layer}">${r.layer}</span>` +
-      `<span class="badge ${r.status}">${r.status}</span>` +
+      `<span class="layer ${esc(r.layer)}">${esc(r.layer)}</span>` +
+      `<span class="badge ${esc(r.status)}">${esc(r.status)}</span>` +
       `<span class="conf">confidence <b>${Math.round(r.confidence * 100)}%</b> · support ${r.support} · used ${r.usageCount}×</span>` +
     `</div>` +
     `<div class="statement">${esc(r.statement)}</div>` +
     `<div class="rationale">${esc(r.rationale)}</div>` +
-    `<div class="evidence">evidence: ${r.evidenceRunIds.join(', ')}</div>` +
+    `<div class="evidence">evidence: ${r.evidenceRunIds.map(esc).join(', ')}</div>` +
   `</div>`;
-}
-
-function layerBars(rules, report) {
-  const blankFromReport = report && report.blankLayers ? report.blankLayers : [];
-  return RULE_LAYERS.map(layer => {
-    const count = rules.filter(r => r.layer === layer).length;
-    const blank = count === 0;
-    const width = Math.max(count * 12, blank ? 4 : 2);
-    return `<div class="layer-row">` +
-      `<span class="layer-name">${layer}</span>` +
-      `<span class="bar ${blank ? 'blank' : ''}" style="width:${width}%"></span>` +
-      `<span class="layer-count ${blank ? 'blank' : ''}">${blank ? 'blank' : count}</span>` +
-    `</div>`;
-  }).join('');
 }
 
 /* ------------------------------------------------ embedded demo data */
 
 /*
- * Output of `npm run demo` from the real engine (goal-evolve/src), embedded
- * so the dashboard tells the true story without needing a snapshot file.
- * Rules mirror evolve.ts phrasing; ids are the engine's FNV-1a hashes.
+ * Verbatim output of `npm run demo --json` from the real engine
+ * (goal-evolve/src), embedded so the page tells the true story with no
+ * snapshot file present. Regenerate with:
+ *   cd goal-evolve && npm run demo:json
  */
 const EMBEDDED_DEMO = {
   goal: {
@@ -233,53 +229,21 @@ const EMBEDDED_DEMO = {
     { id: 'RUN-10', outcome: 'achieved', actions: [{ kind: 'search' }, { kind: 'read' }, { kind: 'edit' }, { kind: 'test' }, { kind: 'finish' }], note: 'tests pass' },
   ],
   rules: [
-    {
-      id: 'RULE-2h4a01',
-      statement: 'Read the relevant files, then edit in place, then run the tests',
-      rationale: 'Observed in 7 run(s), 7 of which achieved the goal (100% success rate).',
-      layer: 'planning',
-      confidence: 1.0,
-      support: 7,
-      evidenceRunIds: ['RUN-5','RUN-6','RUN-7','RUN-8','RUN-9','RUN-10'],
-      status: 'approved',
-      usageCount: 1,
-    },
-    {
-      id: 'RULE-3kq9xw',
-      statement: 'Read the relevant files, then edit in place, then run the tests, then finish and report',
-      rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).',
-      layer: 'verification',
-      confidence: 1.0,
-      support: 6,
-      evidenceRunIds: ['RUN-5','RUN-6','RUN-7','RUN-8','RUN-9','RUN-10'],
-      status: 'candidate',
-      usageCount: 0,
-    },
-    {
-      id: 'REC-5t2v8c',
-      statement: 'When the change does not apply cleanly, run the tests before finishing',
-      rationale: '4 run(s) failed with this signature. Successful runs verified with tests before finishing.',
-      layer: 'recovery',
-      confidence: 0.8,
-      support: 4,
-      evidenceRunIds: ['RUN-1','RUN-2','RUN-3','RUN-4'],
-      status: 'candidate',
-      usageCount: 0,
-    },
+    { id: 'RULE-10wni7i', statement: 'Run the tests, then finish and report', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'verification', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-11zg6pu', statement: 'Read the relevant files, edit in place, run the tests, then finish and report', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-1pccmdi', statement: 'Edit in place, run the tests, then finish and report', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'execution', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-1uszm1h', statement: 'Read the relevant files, then edit in place', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-4hnurt', statement: 'Read the relevant files, edit in place, then run the tests', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-qqcyfx', statement: 'Edit in place, then run the tests', rationale: 'Observed in 6 run(s), 6 of which achieved the goal (100% success rate).', layer: 'execution', confidence: 1, support: 6, evidenceRunIds: ['RUN-10','RUN-5','RUN-6','RUN-7','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-1h7i6u1', statement: 'Search before assuming, read the relevant files, edit in place, then run the tests', rationale: 'Observed in 3 run(s), 3 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 3, evidenceRunIds: ['RUN-10','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-30p7yd', statement: 'Search before assuming, read the relevant files, then edit in place', rationale: 'Observed in 3 run(s), 3 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 3, evidenceRunIds: ['RUN-10','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'RULE-v8j4k5', statement: 'Search before assuming, then read the relevant files', rationale: 'Observed in 3 run(s), 3 of which achieved the goal (100% success rate).', layer: 'planning', confidence: 1, support: 3, evidenceRunIds: ['RUN-10','RUN-8','RUN-9'], status: 'candidate', usageCount: 0 },
+    { id: 'REC-w303h6', statement: 'When the change does not apply cleanly, run the tests before finishing', rationale: '4 run(s) failed with this signature. Successful runs verified with tests before finishing.', layer: 'recovery', confidence: 0.8, support: 4, evidenceRunIds: ['RUN-1','RUN-2','RUN-3','RUN-4'], status: 'approved', usageCount: 1 },
   ],
-  report: {
-    observedRuns: 10,
-    blankLayers: [],
-  },
+  report: { observedRuns: 10, blankLayers: [] },
 };
 
 /* ------------------------------------------------ wiring */
-
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
-}
 
 document.getElementById('btnDemo').addEventListener('click', () => render(EMBEDDED_DEMO));
 
@@ -288,16 +252,13 @@ document.getElementById('fileInput').addEventListener('change', e => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      render(JSON.parse(reader.result));
-    } catch (err) {
-      alert('Invalid snapshot: ' + err.message);
-    }
+    try { render(JSON.parse(reader.result)); }
+    catch (err) { alert('Invalid snapshot: ' + err.message); }
   };
   reader.readAsText(file);
 });
 
-// Auto-render the embedded demo so the page is never empty.
+// Auto-render so the page is never empty.
 render(EMBEDDED_DEMO);
 </script>
 </body>
