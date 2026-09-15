@@ -26,6 +26,7 @@ const PORT = process.env.PORT || 3000;
 const DASHBOARD = path.join(__dirname, 'dashboard', 'index.html');
 const SNAPSHOT = path.join(__dirname, 'out', 'snapshot.json');
 const BIN_DEMO = path.join(__dirname, 'bin', 'demo.ts');
+const DIST_DEMO = path.join(__dirname, 'dist', 'bin', 'demo.js');
 const RUN_MJS = path.join(__dirname, 'run.mjs');
 
 const mimeTypes = {
@@ -44,30 +45,35 @@ const mimeTypes = {
 };
 
 /** Run the engine and return structured JSON output. */
-function runEngine(): { status: string; output: string; snapshot?: unknown } {
+function runEngine(): { status: string; output: string; data?: unknown } {
   const CAN_STRIP_TYPES = (() => {
     const [major, minor] = process.versions.node.split('.').map(Number);
     return major > 22 || (major === 22 && minor >= 6);
   })();
 
-  if (CAN_STRIP_TYPES) {
-    const result = spawnSync(process.execPath, ['--experimental-strip-types', BIN_DEMO, '--json'], {
+  const runBinary = (cmd: string, args: string[]): { status: number; stdout: string; stderr: string } => {
+    return spawnSync(cmd, args, {
       cwd: __dirname,
       encoding: 'utf8',
-      timeout: 30000,
+      timeout: 60000,
     });
+  };
+
+  if (CAN_STRIP_TYPES) {
+    // Node >= 22.6: run TS directly
+    const result = runBinary(process.execPath, ['--experimental-strip-types', BIN_DEMO, '--json']);
     if (result.status !== 0) {
       return { status: 'error', output: result.stderr || result.stdout || 'Engine failed' };
     }
     try {
-      const json = JSON.parse(result.stdout);
-      return { status: 'ok', output: result.stdout, snapshot: json };
+      const data = JSON.parse(result.stdout);
+      return { status: 'ok', output: result.stdout, data };
     } catch {
       return { status: 'ok', output: result.stdout };
     }
   }
 
-  // Node < 22.6: compile first, then run
+  // Node < 22.6: compile first, then run JS
   const tsc = path.join(__dirname, 'node_modules', '.bin', 'tsc');
   if (fs.existsSync(tsc)) {
     const built = spawnSync(tsc, [
@@ -78,24 +84,25 @@ function runEngine(): { status: string; output: string; snapshot?: unknown } {
       '--rewriteRelativeImportExtensions',
       '--skipLibCheck',
       'src/types.ts', 'src/store.ts', 'src/goal.ts', 'src/evolve.ts',
-      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts', 'test/engine.test.ts', 'test/domain.test.ts', 'test/goal-dialog.test.ts',
+      'src/engine.ts', 'src/demo.ts', 'bin/demo.ts',
+      'test/engine.test.ts', 'test/domain.test.ts', 'test/goal-dialog.test.ts',
     ], { cwd: __dirname, encoding: 'utf8' });
     if (built.status !== 0) {
       return { status: 'error', output: built.stderr || built.stdout || 'tsc failed' };
     }
   }
 
-  const result = spawnSync(process.execPath, ['dist/bin/demo.js', '--json'], {
-    cwd: __dirname,
-    encoding: 'utf8',
-    timeout: 30000,
-  });
+  if (!fs.existsSync(DIST_DEMO)) {
+    return { status: 'error', output: 'Compiled demo not found at dist/bin/demo.js' };
+  }
+
+  const result = runBinary(process.execPath, [DIST_DEMO, '--json']);
   if (result.status !== 0) {
     return { status: 'error', output: result.stderr || result.stdout || 'Engine failed' };
   }
   try {
-    const json = JSON.parse(result.stdout);
-    return { status: 'ok', output: result.stdout, snapshot: json };
+    const data = JSON.parse(result.stdout);
+    return { status: 'ok', output: result.stdout, data };
   } catch {
     return { status: 'ok', output: result.stdout };
   }
@@ -105,23 +112,20 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url || '/', `http://localhost:${PORT}`);
   const pathname = url.pathname;
 
-  // ── API endpoints ──────────────────────────────────────────────
+  // ── API endpoints ──────────────────────────────────────────
 
   if (pathname === '/api/run' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
 
-    res.write('data: {"status":"running","message":"Running 10 practice runs..."}\n\n');
+    res.write('{"status":"running","message":"Running 10 practice runs..."}');
 
     const result = runEngine();
 
     if (result.status === 'ok') {
-      res.write(`data: {"status":"complete","message":"Done — ${result.output.split('\n').filter(l => l.includes('SC-006')).join(' ')}"}\n\n`);
-      res.write(`data: ${JSON.stringify({ status: 'ok', result: result.snapshot || null, raw: result.output })}\n\n`);
+      res.end(JSON.stringify({ status: 'ok', data: result.data || null, output: result.output }));
     } else {
-      res.write(`data: ${JSON.stringify({ status: 'error', message: result.output })}\n\n`);
+      res.end(JSON.stringify({ status: 'error', message: result.output }));
     }
-
-    res.end();
     return;
   }
 
@@ -138,7 +142,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── Static file serving ────────────────────────────────────────
+  // ── Static file serving ────────────────────────────────────
 
   let filePath;
   if (pathname === '/' || pathname === '/index.html') {
