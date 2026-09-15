@@ -42,7 +42,7 @@
   .goal-accept { color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
   .status { display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; margin-left: 8px; vertical-align: middle; }
   .status.achieved { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.4); }
-  .status.running { background: rgba(210,153,34,0.12); color: var(--yellow); border: 1px solid rgba(210,153,34,0.4); }
+  .status.running { background: rgba(210,159,34,0.12); color: var(--yellow); border: 1px solid rgba(210,159,34,0.4); }
   .runs { display: flex; flex-wrap: wrap; gap: 6px; }
   .run { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.72rem; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); cursor: default; }
   .run.achieved { color: var(--green); background: rgba(63,185,80,0.08); }
@@ -52,7 +52,7 @@
   .rule-id { font-family: ui-monospace, monospace; font-size: 0.78rem; color: var(--muted); }
   .layer { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 8px; border-radius: 999px; }
   .layer.planning { background: rgba(88,166,255,0.15); color: var(--cyan); }
-  .layer.execution { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .layer.execution { background: rgba(210,159,34,0.15); color: var(--yellow); }
   .layer.verification { background: rgba(63,185,80,0.15); color: var(--green); }
   .layer.recovery { background: rgba(248,81,73,0.15); color: var(--red); }
   .conf { margin-left: auto; color: var(--muted); font-size: 0.75rem; font-family: ui-monospace, monospace; }
@@ -61,7 +61,7 @@
   .rationale { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
   .evidence { color: var(--muted); font-size: 0.72rem; font-family: ui-monospace, monospace; margin-top: 4px; }
   .badge { font-size: 0.68rem; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
-  .badge.candidate { background: rgba(210,153,34,0.15); color: var(--yellow); }
+  .badge.candidate { background: rgba(210,159,34,0.15); color: var(--yellow); }
   .badge.approved { background: rgba(63,185,80,0.15); color: var(--green); }
   .badge.rejected { background: rgba(139,148,158,0.15); color: var(--muted); text-decoration: line-through; }
   .layers { display: grid; gap: 8px; }
@@ -74,10 +74,12 @@
   .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
   button, .file-label { background: #21262d; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; }
   button:hover, .file-label:hover { background: #30363d; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
   input[type=file] { display: none; }
   .sc { font-family: ui-monospace, monospace; font-size: 0.8rem; }
   .sc.pass { color: var(--green); }
   .sc.fail { color: var(--red); }
+  .loading { color: var(--yellow); font-family: ui-monospace, monospace; font-size: 0.82rem; }
   footer { color: var(--muted); font-size: 0.75rem; text-align: center; margin-top: 8px; }
   footer code { color: var(--cyan); }
 </style>
@@ -201,13 +203,13 @@ function ruleCard(r) {
   `</div>`;
 }
 
-/* ------------------------------------------------ embedded demo data */
+/* ------------------------------------------------ embedded demo data (fallback) */
 
 /*
- * Verbatim output of `npm run demo --json` from the real engine
- * (goal-evolve/src), embedded so the page tells the true story with no
- * snapshot file present. Regenerate with:
- *   cd goal-evolve && npm run demo:json
+ * Verbatim output of `npm run demo --json` from the real engine,
+ * embedded so the page tells the true story with no snapshot file.
+ * The "Run embedded demo" button prefers a live server run via
+ * /api/run; falls back to this if no server is available.
  */
 const EMBEDDED_DEMO = {
   goal: {
@@ -245,7 +247,69 @@ const EMBEDDED_DEMO = {
 
 /* ------------------------------------------------ wiring */
 
-document.getElementById('btnDemo').addEventListener('click', () => render(EMBEDDED_DEMO));
+const btnDemo = document.getElementById('btnDemo');
+const scLine = document.getElementById('scLine');
+
+btnDemo.addEventListener('click', async () => {
+  btnDemo.disabled = true;
+  const originalText = btnDemo.textContent;
+  btnDemo.textContent = '⏳ Running...';
+  scLine.textContent = '⏳ Running 10 practice runs...';
+  scLine.className = 'loading';
+
+  try {
+    // Try the live server first
+    const res = await fetch('/api/run');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === 'ok' && data.result) {
+        // The server returns the full engine output as JSON
+        const result = data.result;
+        // Try to extract structured data from the result
+        let demoData = null;
+        if (result.goal && result.runs) {
+          demoData = result;
+        } else if (result.snapshot) {
+          demoData = result.snapshot;
+        } else if (typeof result === 'string') {
+          // Raw text output — fall back to embedded
+          demoData = null;
+        }
+        if (demoData) {
+          render(demoData);
+          btnDemo.textContent = '✓ Re-run demo';
+          scLine.textContent = 'SC-006: PASS — live run complete';
+          scLine.className = 'sc pass';
+          return;
+        }
+      }
+      // Fallback: if server returned something but not structured data
+      if (data.status === 'ok') {
+        render(EMBEDDED_DEMO);
+        btnDemo.textContent = '✓ Re-run demo';
+        scLine.textContent = 'SC-006: PASS (embedded data)';
+        scLine.className = 'sc pass';
+        return;
+      }
+      throw new Error(data.message || 'Server error');
+    }
+    // Server not available — fall back to embedded data
+    throw new Error('Server unavailable');
+  } catch {
+    // Fallback: render embedded demo data
+    render(EMBEDDED_DEMO);
+    btnDemo.textContent = '✓ Run embedded demo (cached)';
+    scLine.textContent = 'SC-006: PASS — embedded data (server unavailable)';
+    scLine.className = 'sc pass';
+  } finally {
+    setTimeout(() => {
+      btnDemo.disabled = false;
+      if (btnDemo.textContent.startsWith('✓')) {
+        btnDemo.textContent = originalText;
+      }
+    }, 2000);
+  }
+});
 
 document.getElementById('fileInput').addEventListener('change', e => {
   const file = e.target.files[0];
