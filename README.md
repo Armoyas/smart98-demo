@@ -6,6 +6,31 @@ SDD-based demo project for the **Smart98** AI workspace platform. This repositor
 
 ---
 
+## 🎯 For Vibe Coding Group
+
+A dedicated **pitch deck** has been created to showcase Smart98's capabilities — especially **MCP, Skill, and Agent** — for the vibe coding audience:
+
+📊 **[pitch-deck/index.html](pitch-deck/index.html)** — 12-slide presentation covering:
+
+| Slide | Topic | Highlights |
+|-------|-------|-----------|
+| 1 | Title | Stats: 10 runs → rules, 4 layers, 13 FRs, 0 deps |
+| 2 | The Problem | Without vs With Smart98 — failure → learning loop |
+| 3 | The Smart98 Loop | Goal → Agent → MCP → Skill → Engine → Human |
+| 4 | Self-Evolving (LIVE) | 10 runs → 10 rules, sample rules, guarantees |
+| 5 | MCP | Tool discovery, chat invocation, architecture |
+| 6 | Skill | @skill-name activation, use cases, FR-003/004 |
+| 7 | Agent | Autonomous execution, lifecycle, FR-005/006 |
+| 8 | Workspaces | Scenario org, share links, cross-session, Labs |
+| 9 | Roadmap | P1 MVP → P2 → P3 with status |
+| 10 | Try It | 30-second quick start |
+| 11 | SDD | Spec → Plan → Implement loop |
+| 12 | Close | "Vibe coding is not magic" |
+
+Open in browser or convert to PDF for presentation.
+
+---
+
 ##  Run it in 30 seconds
 
 The **goal-evolve** demo is the fastest way to feel Smart98: a goal with acceptance criteria, an agent that practices, and a self-evolving engine that mines rules from that practice — deterministically, with zero runtime dependencies.
@@ -98,19 +123,22 @@ smart98-demo/
 │   ├── plan.md            10 implementation steps with test criteria
 │   └── requirements.md    validation checklist / SDD gates
 │
-└── goal-evolve/           ← the runnable demo
-    ├── run.mjs            universal launcher (Node 18+)
-    ├── src/
-    │   ├── types.ts       Goal, Run, Rule, Observation, RuleLayer
-    │   ├── store.ts       append-only JSONL event log; state by reduction
-    │   ├── goal.ts        goal state machine + transition table
-    │   ├── evolve.ts      the two miners (habits + recoveries)
-    │   ├── engine.ts      wires runGoal() → Observation → evolveNow() → Rule[]
-    │   ── demo.ts        the 10-run practice scenario
-    ├── bin/demo.ts        CLI: colored report, --json, exit code = SC-006
-    ├── test/engine.test.ts  17 tests over the five guarantees
-    ├── dashboard/index.html single-file visual dashboard
-    └── DEMO_SCRIPT.md     4-minute talk track
+├── goal-evolve/           ← the runnable demo
+│   ├── run.mjs            universal launcher (Node 18+)
+│   ├── src/
+│   │   ├── types.ts       Goal, Run, Rule, Observation, RuleLayer
+│   │   ├── store.ts       append-only JSONL event log; state by reduction
+│   │   ├── goal.ts        goal state machine + transition table
+│   │   ├── evolve.ts      the two miners (habits + recoveries)
+│   │   ├── engine.ts      wires runGoal() → Observation → evolveNow() → Rule[]
+│   │   └─ demo.ts        the 10-run practice scenario
+│   ├── bin/demo.ts        CLI: colored report, --json, exit code = SC-006
+│   ├── test/engine.test.ts  17 tests over the five guarantees
+│   ├── dashboard/index.html single-file visual dashboard
+│   └── DEMO_SCRIPT.md     4-minute talk track
+│
+└── pitch-deck/            ← vibe coding presentation
+    └── index.html         12-slide deck (MCP, Skill, Agent, Self-Evolving, Roadmap)
 ```
 
 ---
@@ -161,6 +189,7 @@ graph LR
 - [x] Implementation plan
 - [x] Validation checklist
 - [x] `goal-evolve` — Goal + Self-Evolving engine, CLI, dashboard, tests, demo script
+- [x] `pitch-deck` — Vibe coding presentation deck
 - [ ] Remaining implementation (MCP, Skill, Agent, Workspaces — per plan.md)
 
 ---

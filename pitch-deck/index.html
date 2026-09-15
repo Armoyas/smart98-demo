@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart98 — Vibe Coding, Evidence-Backed</title>
+<style>
+  @page { size: 16:9; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #0d1117; color: #e6edf3; overflow: hidden; }
+  .deck { width: 100vw; height: 100vh; }
+  .slide { width: 100vw; height: 100vh; padding: 60px 80px; display: flex; flex-direction: column; justify-content: center; position: relative; page-break-after: always; border-bottom: 1px solid #21262d; }
+  .slide:last-child { border-bottom: none; }
+  h1 { font-size: 3.2rem; font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+  h2 { font-size: 2rem; font-weight: 600; margin-bottom: 24px; }
+  h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 12px; color: #58a6ff; }
+  .accent { color: #58a6ff; } .green { color: #3fb950; } .red { color: #f85149; } .yellow { color: #d29922; } .purple { color: #bc8cff; } .muted { color: #8b949e; }
+  .sub { font-size: 1.2rem; color: #8b949e; margin-bottom: 24px; line-height: 1.6; }
+  .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.9rem; }
+  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px 24px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; line-height: 1.6; overflow-x: auto; margin: 12px 0; }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; color: #58a6ff; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px 24px; }
+  .card-accent { border-left: 3px solid #58a6ff; } .card-green { border-left: 3px solid #3fb950; } .card-yellow { border-left: 3px solid #d29922; } .card-red { border-left: 3px solid #f85149; } .card-purple { border-left: 3px solid #bc8cff; } .card-blue { border-left: 3px solid #58a6ff; }
+  .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; text-align: center; }
+  .stat-num { font-size: 2.8rem; font-weight: 700; } .stat-label { color: #8b949e; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; margin-right: 6px; }
+  .badge-green { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+  .badge-yellow { background: rgba(210,159,34,0.15); color: #d29922; border: 1px solid rgba(210,159,34,0.3); }
+  .badge-red { background: rgba(248,81,73,0.15); color: #f85149; border: 1px solid rgba(248,81,73,0.3); }
+  .badge-blue { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th { text-align: left; padding: 10px 14px; border-bottom: 2px solid #30363d; color: #8b949e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 10px 14px; border-bottom: 1px solid #21262d; font-size: 0.9rem; }
+  ul { list-style: none; padding: 0; }
+  ul li { padding: 6px 0; padding-left: 24px; position: relative; font-size: 0.95rem; line-height: 1.6; }
+  ul li::before { content: '→'; position: absolute; left: 0; color: #58a6ff; font-weight: 700; }
+  .slide-footer { position: absolute; bottom: 24px; left: 80px; right: 80px; display: flex; justify-content: space-between; color: #484f58; font-size: 0.75rem; }
+  .progress { display: flex; gap: 4px; margin-bottom: 40px; }
+  .progress-seg { height: 3px; flex: 1; background: #21262d; border-radius: 2px; }
+  .progress-seg.active { background: #58a6ff; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-col { padding: 24px; border-radius: 10px; }
+  .compare-col.bad { background: rgba(248,81,73,0.06); border: 1px solid rgba(248,81,73,0.2); }
+  .compare-col.good { background: rgba(63,185,80,0.06); border: 1px solid rgba(63,185,80,0.2); }
+  .loop { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+  .loop-step { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 20px; font-size: 0.9rem; font-weight: 500; text-align: center; min-width: 140px; }
+  .loop-arrow { font-size: 1.5rem; color: #58a6ff; }
+  .diagram { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 24px; text-align: center; margin: 16px 0; }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .flow-box { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 10px 16px; font-size: 0.82rem; min-width: 100px; text-align: center; }
+  .flow-arrow { color: #58a6ff; font-size: 1.2rem; }
+  @media print { .slide { width: 100%; height: auto; min-height: 100vh; page-break-after: always; overflow: visible; } body { overflow: visible; } }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- SLIDE 1 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h1>Smart98<br><span class="accent">Vibe Coding, but Evidence-Backed</span></h1>
+  <p class="sub">Goals, Practice, Rules that Prove Themselves<br>AI Workspace Platform — MCP · Skill · Agent</p>
+  <div class="grid-4" style="margin-top:40px;">
+    <div class="stat-card"><div class="stat-num green">10</div><div class="stat-label">Runs → Rules</div></div>
+    <div class="stat-card"><div class="stat-num">4</div><div class="stat-label">Rule Layers</div></div>
+    <div class="stat-card"><div class="stat-num">13</div><div class="stat-label">Functional Reqs</div></div>
+    <div class="stat-card"><div class="stat-num">0</div><div class="stat-label">Runtime Deps</div></div>
+  </div>
+  <div class="slide-footer"><span>Smart98 · Vibe Coding Deck</span><span>github.com/Armoyas/smart98-demo</span></div>
+</div>
+
+<!-- SLIDE 2 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>The Problem</h2>
+  <h3>Vibe coders guess. Smart98 learns.</h3>
+  <div class="compare">
+    <div class="compare-col bad"><h3 style="color:#f85149;">Without Smart98</h3><ul><li>Agent tries something</li><li>It fails</li><li>Agent tries again</li><li>It fails differently</li><li>No memory of failure</li><li>Same mistake next time</li><li>User manually patches</li></ul></div>
+    <div class="compare-col good"><h3 style="color:#3fb950;">With Smart98</h3><ul><li>Agent tries something</li><li>It fails</li><li>Engine observes the pattern</li><li>Mines a recovery rule</li><li>Next attempt uses the rule</li><li>Success — with evidence</li><li>Rule approved → deployed</li></ul></div>
+  </div>
+  <div class="card card-yellow" style="margin-top:20px;"><strong>The key insight:</strong> In most tools, four failures is where the story ends. Smart98 treats failures as <span class="yellow">training data</span>. The engine learns from practice — deterministically, with zero model calls.</div>
+  <div class="slide-footer"><span>Slide 2 / 12</span><span>The Loop</span></div>
+</div>
+
+<!-- SLIDE 3 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>The Smart98 Loop</h2>
+  <p class="sub">Every task runs through this cycle — goals with criteria, agents that practice, rules mined from evidence.</p>
+  <div class="loop">
+    <div class="loop-step">🎯<br><strong>Goal</strong><br><span class="muted" style="font-size:0.75rem;">Acceptance criteria</span></div><div class="loop-arrow">→</div>
+    <div class="loop-step">🤖<br><strong>Agent</strong><br><span class="muted" style="font-size:0.75rem;">Autonomous</span></div><div class="loop-arrow">→</div>
+    <div class="loop-step">🛠️<br><strong>MCP Tools</strong><br><span class="muted" style="font-size:0.75rem;">Chat-invoked</span></div><div class="loop-arrow">→</div>
+    <div class="loop-step">⚡<br><strong>Skill</strong><br><span class="muted" style="font-size:0.75rem;">@skill-name</span></div><div class="loop-arrow">→</div>
+    <div class="loop-step" style="border-color:#bc8cff;">🔍<br><strong>Engine</strong><br><span class="muted" style="font-size:0.75rem;">Mines rules</span></div><div class="loop-arrow">→</div>
+    <div class="loop-step" style="border-color:#3fb950;">✅<br><strong>Human</strong><br><span class="muted" style="font-size:0.75rem;">Approves</span></div>
+  </div>
+  <div class="grid-3" style="margin-top:24px;">
+    <div class="card card-green"><h3>Deterministic</h3><p style="font-size:0.88rem;color:#8b949e;">Same practice in, same rules out. No sampling, no model call.</p></div>
+    <div class="card card-purple"><h3>Evidence-Backed</h3><p style="font-size:0.88rem;color:#8b949e;">Every rule cites the runs that produced it. Auditable.</p></div>
+    <div class="card card-yellow"><h3>Conservative</h3><p style="font-size:0.88rem;color:#8b949e;">A rule needs ≥3 independent runs. One lucky run ≠ a habit.</p></div>
+  </div>
+  <div class="slide-footer"><span>Slide 3 / 12</span><span>Core Demo</span></div>
+</div>
+
+<!-- SLIDE 4 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>What You Just Saw: Self-Evolving</h2>
+  <p class="sub">10 practice runs → 10 evidence-backed rules. This is LIVE in the repo right now.</p>
+  <div class="grid-4" style="margin-bottom:24px;">
+    <div class="stat-card"><div class="stat-num">10</div><div class="stat-label">Practice Runs</div></div>
+    <div class="stat-card"><div class="stat-num green">6</div><div class="stat-label">Achieved</div></div>
+    <div class="stat-card"><div class="stat-num red">4</div><div class="stat-label">Failed</div></div>
+    <div class="stat-card"><div class="stat-num green">10</div><div class="stat-label">Rules Mined</div></div>
+  </div>
+  <div class="grid-2">
+    <div><h3 style="margin-bottom:12px;">Sample Rule (mined automatically)</h3><pre><span style="color:#bc8cff;">RULE-4hnurt</span> [planning] <span style="color:#3fb950;">100%</span> support=6
+  Read the relevant files, edit in place,
+  then run the tests
+  Observed in 6 run(s), 6 achieved the goal.
+  evidence: RUN-5, RUN-6, RUN-7, RUN-8, RUN-9, RUN-10</pre></div>
+    <div><h3 style="margin-bottom:12px;">Recovery Rule (from failures)</h3><pre><span style="color:#bc8cff;">REC-w303h6</span> [recovery] <span style="color:#d29922;">80%</span> support=4
+  When the change does not apply cleanly,
+  run the tests before finishing
+  4 runs failed with this signature.</pre></div>
+  </div>
+  <div class="card" style="margin-top:20px;"><strong>Guarantees:</strong> Deterministic · Evidence-backed · Conservative (min 3 runs) · Non-trivial · Idempotent</div>
+  <div class="slide-footer"><span>Slide 4 / 12</span><span>Self-Evolving · LIVE</span></div>
+</div>
+
+<!-- SLIDE 5 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>MCP — Tool Discovery & Chat Invocation</h2>
+  <p class="sub">Extend the platform without writing a single line of integration code.</p>
+  <div class="grid-2">
+    <div><h3>How it works</h3><ul><li>MCP marketplace lists tools (name, description, version)</li><li>User opens tool picker in chat</li><li>Filters by name, discovers relevant tools</li><li>Invokes tool with typed arguments</li><li>Results rendered inline in chat</li></ul><div class="card card-blue" style="margin-top:16px;"><span class="badge badge-blue">FR-001</span> Marketplace lists tools<br><span class="badge badge-blue">FR-002</span> Chat invokes tools inline</div></div>
+    <div><h3>Architecture</h3><div class="diagram"><div class="flow"><div class="flow-box">User Chat</div><div class="flow-arrow">↔</div><div class="flow-box">MCP Marketplace</div><div class="flow-arrow">→</div><div class="flow-box">Tool Call</div><div class="flow-arrow">→</div><div class="flow-box">Inline Result</div></div></div><div style="margin-top:16px;"><h3 style="margin-bottom:12px;">Example Flow</h3><pre>User: "parse this CSV"
+↓
+Marketplace: 3 MCP tools match
+  · csv-parser@1.2
+  · data-validator@0.8
+  · schema-gen@2.1
+↓
+User invokes csv-parser@1.2
+↓
+Result: 42 rows parsed, 0 errors</pre></div></div>
+  </div>
+  <div class="slide-footer"><span>Slide 5 / 12</span><span>MCP · P1 MVP</span></div>
+</div>
+
+<!-- SLIDE 6 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Skill — Reusable Behavior Packages</h2>
+  <p class="sub">One word activation. One line to define. Reusable across every workspace.</p>
+  <div class="grid-2">
+    <div><h3>Activation</h3><pre>User: "translate this to Farsi @translate-fa"
+↓
+Skill handler runs → result in chat</pre><div class="card card-green" style="margin-top:16px;"><strong>Graceful degradation:</strong> Unknown <code>@unknown-skill</code> → non-blocking suggestion, never breaks the flow.</div><div style="margin-top:16px;"><span class="badge badge-green">FR-003</span> Full CRUD registry<br><span class="badge badge-green">FR-004</span> @skill-name routes to handler<br><span class="badge badge-green">SC-002</span> 100% activation success</div></div>
+    <div><h3>Use Cases</h3><div class="card card-accent" style="margin-bottom:12px;"><strong>@translate-fa</strong><br><span class="muted">Persian translation with Vazirmatn font support</span></div><div class="card card-accent" style="margin-bottom:12px;"><strong>@pdf-export</strong><br><span class="muted">Convert HTML artifacts to PDF (WeasyPrint/wkhtmltopdf)</span></div><div class="card card-accent" style="margin-bottom:12px;"><strong>@data-viz</strong><br><span class="muted">Generate charts from data — lightweight, no heavy deps</span></div><div class="card card-accent"><strong>@verification</strong><br><span class="muted">Run test suites and report pass/fail with evidence</span></div></div>
+  </div>
+  <div class="slide-footer"><span>Slide 6 / 12</span><span>Skill · P1 MVP</span></div>
+</div>
+
+<!-- SLIDE 7 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Agent — Autonomous Execution</h2>
+  <p class="sub">Assign a task. Walk away. Get a structured report.</p>
+  <div class="grid-2">
+    <div><h3>Agent Builder</h3><div class="card" style="margin-bottom:12px;"><span class="badge badge-blue">FR-005</span> System prompt<br><span class="badge badge-blue">FR-005</span> Model selection<br><span class="badge badge-blue">FR-005</span> Provider choice<br><span class="badge badge-blue">FR-005</span> Plugin configuration</div><div style="margin-top:16px;"><span class="badge badge-green">FR-006</span> Autonomous execution<br><span class="badge badge-green">FR-006</span> Status tracking<br><span class="badge badge-green">FR-006</span> Structured reports</div></div>
+    <div><h3>Lifecycle</h3><div class="diagram"><div class="flow"><div class="flow-box">Task<br>Assigned</div><div class="flow-arrow">→</div><div class="flow-box">Agent<br>Executes</div><div class="flow-arrow">→</div><div class="flow-box">MCP + Skill<br>Invoked</div><div class="flow-arrow">→</div><div class="flow-box" style="border-color:#3fb950;">Report<br>Delivered</div></div></div><div class="card card-green" style="margin-top:16px;"><strong>The goal-evolve demo IS an agent:</strong> It receives a goal, practices autonomously, and reports results — all without human intervention during runs.</div></div>
+  </div>
+  <div class="slide-footer"><span>Slide 7 / 12</span><span>Agent · P1 MVP</span></div>
+</div>
+
+<!-- SLIDE 8 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Project Workspaces</h2>
+  <p class="sub">Organize scenarios. Share by link. Re-open across sessions.</p>
+  <div class="grid-3">
+    <div class="card card-accent"><h3>Scenario Organization</h3><p style="color:#8b949e;font-size:0.9rem;">Group related goals, agents, and skills into project workspaces.</p></div>
+    <div class="card card-accent"><h3>Shareable Links</h3><p style="color:#8b949e;font-size:0.9rem;">Share workspace context with teammates. Same scenario, agents, rules.</p></div>
+    <div class="card card-accent"><h3>Cross-Session</h3><p style="color:#8b949e;font-size:0.9rem;">Close and reopen. All scenarios and settings restored.</p></div>
+  </div>
+  <div class="card" style="margin-top:24px;"><h3>Labs Integration</h3><table><tr><th>Feature</th><th>Status</th><th>Spec Section</th></tr><tr><td>Project Workspaces</td><td><span class="badge badge-green">Alpha</span> P1</td><td>Step 2</td></tr><tr><td>Self-Evolving</td><td><span class="badge badge-blue">Alpha</span> P2</td><td>Step 8</td></tr><tr><td>Artifact Deployments</td><td><span class="badge badge-yellow">Beta</span> P2</td><td>Step 7</td></tr><tr><td>Markdown Rendering</td><td><span class="badge badge-yellow">Beta</span> P3</td><td>Step 6+9</td></tr><tr><td>OAuth Apps</td><td><span class="badge badge-blue">Beta</span> P3</td><td>Step 6+9</td></tr></table></div>
+  <div class="slide-footer"><span>Slide 8 / 12</span><span>Workspaces · P1 MVP</span></div>
+</div>
+
+<!-- SLIDE 9 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Roadmap</h2>
+  <p class="sub">What's built, what's coming, what's vision.</p>
+  <table><tr><th>Priority</th><th>Feature</th><th>Status</th><th>Key Stories</th></tr>
+  <tr><td rowspan="4"><span class="badge badge-green">P1 MVP</span></td><td>MCP Tools</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-001, US-002 · FR-001, FR-002 · SC-001</td></tr>
+  <tr><td>Skill Activation</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-002 · FR-003, FR-004 · SC-002</td></tr>
+  <tr><td>Custom Agents</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-003 · FR-005, FR-006 · SC-003</td></tr>
+  <tr><td>Project Workspaces</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-004 · FR-007, FR-008 · SC-004</td></tr>
+  <tr><td rowspan="2"><span class="badge badge-blue">P2</span></td><td>Self-Evolving</td><td><span class="badge badge-green">✅ LIVE</span></td><td>US-006 · FR-009 · SC-006</td></tr>
+  <tr><td>Artifact Deployment</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-007 · FR-010 · SC-007</td></tr>
+  <tr><td rowspan="4"><span class="badge badge-red">P3</span></td><td>Eval Cases</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-008 · FR-011 · SC-008</td></tr>
+  <tr><td>Markdown Rendering</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-009 · FR-012</td></tr>
+  <tr><td>Text Selection</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-009 · FR-012</td></tr>
+  <tr><td>OAuth Apps</td><td><span class="badge badge-yellow">In Scope</span></td><td>US-010 · FR-013</td></tr></table>
+  <div class="card card-purple" style="margin-top:20px;"><strong>Vision:</strong> Every tool in the platform is discoverable, activatable, and autonomous. The Self-Evolving engine makes the entire platform smarter over time.</div>
+  <div class="slide-footer"><span>Slide 9 / 12</span><span>Roadmap</span></div>
+</div>
+
+<!-- SLIDE 10 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Try It in 30 Seconds</h2>
+  <p class="sub">Zero runtime dependencies. One command. Deterministic output.</p>
+  <div class="grid-2">
+    <div><h3>Get Started</h3><pre>git clone https://github.com/Armoyas/smart98-demo
+cd smart98-demo/goal-evolve
+npm run demo        # 10 practice runs + evolution report
+npm test             # prove the engine's guarantees</pre><div class="card card-green" style="margin-top:16px;"><strong>Works on Node 18+</strong><br>Node 22.6+: runs TypeScript directly<br>Node 18–22.5: auto-compiles with tsc</div></div>
+    <div><h3>Visual Dashboard</h3><p style="color:#8b949e;margin-bottom:12px;">Open <code>dashboard/index.html</code> for the interactive version:</p><ul><li>Stat cards (runs, achieved, rules)</li><li>Goal with acceptance criteria</li><li>Run trace with pass/fail marks</li><li>Evidence-backed rules with citations</li><li>4 Smart98 rule layers with blank detection</li><li>Load snapshot.json for custom data</li></ul><div class="card card-accent" style="margin-top:16px;"><strong>Single-file HTML</strong> — no server, no build, no dependencies. Just open and click "Run embedded demo".</div></div>
+  </div>
+  <div class="slide-footer"><span>Slide 10 / 12</span><span>Quick Start</span></div>
+</div>
+
+<!-- SLIDE 11 -->
+<div class="slide">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg"></div><div class="progress-seg"></div></div>
+  <h2>Built with Spec-Driven Development</h2>
+  <p class="sub">This repo IS the specification — executable and testable.</p>
+  <div class="loop" style="margin-bottom:24px;">
+    <div class="loop-step">📝 Spec.md<br><span class="muted" style="font-size:0.75rem;">Stories, FRs, SCs</span></div><div class="flow-arrow">→</div>
+    <div class="loop-step">📋 Plan.md<br><span class="muted" style="font-size:0.75rem;">Steps, tests</span></div><div class="flow-arrow">→</div>
+    <div class="loop-step">✅ Req.md<br><span class="muted" style="font-size:0.75rem;">Validation gates</span></div><div class="flow-arrow">→</div>
+    <div class="loop-step">💻 Implement<br><span class="muted" style="font-size:0.75rem;">Step-by-step</span></div><div class="flow-arrow">→</div>
+    <div class="loop-step" style="border-color:#58a6ff;">↻ Loop back</div>
+  </div>
+  <div class="grid-3">
+    <div class="card card-green"><h3>Spec Quality</h3><p style="color:#8b949e;font-size:0.88rem;">13 user stories · 13 functional requirements · 8 success criteria · 8 Given-When-Then scenarios</p></div>
+    <div class="card card-purple"><h3>Test Coverage</h3><p style="color:#8b949e;font-size:0.88rem;">17 tests over 5 engine guarantees. Every claim in this deck is test-enforced.</p></div>
+    <div class="card card-yellow"><h3>The Demo IS the Spec</h3><p style="color:#8b949e;font-size:0.88rem;">When you run <code>npm run demo</code>, you're running the executable specification. SC-006 exits non-zero if it fails.</p></div>
+  </div>
+  <div class="slide-footer"><span>Slide 11 / 12</span><span>SDD Methodology</span></div>
+</div>
+
+<!-- SLIDE 12 -->
+<div class="slide" style="text-align:center;justify-content:center;">
+  <div class="progress"><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div><div class="progress-seg active"></div></div>
+  <div style="font-size:1.5rem;margin-bottom:24px;" class="purple">⚡</div>
+  <h1 style="font-size:2.8rem;">Vibe coding is not magic.</h1>
+  <h2 style="color:#8b949e;font-weight:400;">It's goals, practice, and rules that prove themselves with evidence.</h2>
+  <p style="font-size:1.2rem;color:#58a6ff;margin:32px 0;">Smart98 runs that loop at platform scale.</p>
+  <div style="margin:40px 0;">
+    <div class="stat-card" style="display:inline-block;min-width:200px;margin:0 12px;"><div class="stat-num green">P1</div><div class="stat-label">MCP · Skill · Agent · Workspaces</div></div>
+    <div class="stat-card" style="display:inline-block;min-width:200px;margin:0 12px;"><div class="stat-num">P2</div><div class="stat-label">Self-Evolving · Artifacts</div></div>
+    <div class="stat-card" style="display:inline-block;min-width:200px;margin:0 12px;"><div class="stat-num">P3</div><div class="stat-label">Evals · Markdown · OAuth</div></div>
+  </div>
+  <div style="margin-top:32px;"><code style="font-size:1rem;">github.com/Armoyas/smart98-demo</code></div>
+  <div class="slide-footer" style="justify-content:center;"><span>Smart98 · Vibe Coding Deck · Built with Spec-Driven Development</span></div>
+</div>
+
+</div>
+</body>
+</html>
