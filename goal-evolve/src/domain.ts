@@ -66,7 +66,7 @@ export function createDomain(
   const ids = existing.map(d => d.id);
   const now = new Date().toISOString();
   const domain: Domain = {
-    id: nextDomainId(existing),
+    id: nextDomainId(ids),
     name,
     description,
     status: 'draft',
