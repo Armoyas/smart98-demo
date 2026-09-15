@@ -1,7 +1,7 @@
 {
   "name": "smart98-goal-evolve",
   "version": "0.1.0",
-  "description": "Smart98 demo — goal lifecycle + self-evolving rule engine. Zero dependencies.",
+  "description": "Smart98 demo — goal lifecycle + self-evolving rule engine. Zero runtime dependencies.",
   "type": "module",
   "private": true,
   "bin": {
@@ -15,5 +15,8 @@
   },
   "engines": {
     "node": ">=22.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
   }
 }

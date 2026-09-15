@@ -10,7 +10,7 @@
 ```bash
 cd goal-evolve
 npm run demo          # 10 practice runs + evolution report
-npm run demo --json > out/demo.json   # data for the dashboard
+npm run demo:json > out/demo.json   # data for the dashboard
 ```
 
 Sanity check: the CLI must end with `SC-006: PASS`. If it does not, do not
@@ -50,13 +50,13 @@ learning. Watch what Smart98 does with them."
 ## Beat 3 — The evolution (1:30–2:30)
 
 **Say:** "Nothing told the engine what to learn. It read the ten runs and
-mined them. Here is what it found on its own:"
+mined them. Here is one of the rules it found on its own:"
 
-**Show:** the proposed rules, e.g.
+**Show:** a proposed rule, e.g.
 
 ```
-RULE-xxxx [verification] 84% support=6
-  Read the relevant files, then edit in place, then run the tests
+RULE-xxxx [verification] 100% support=6
+  Run the tests, then finish and report
   Observed in 6 run(s), 6 of which achieved the goal (100% success rate).
   evidence: RUN-5, RUN-6, RUN-7, RUN-8, RUN-9, RUN-10
 ```
@@ -68,18 +68,24 @@ RULE-xxxx [verification] 84% support=6
 3. **Conservative** — a rule needs three independent runs before it exists.
    One lucky run is not a habit.
 
+Also look for the recovery rule mined from the four failures:
+`When the change does not apply cleanly, run the tests before finishing`.
+The platform learned from failure, not just success.
+
 ---
 
 ## Beat 4 — The layers (2:30–3:15)
 
 **Say:** "Rules are organized in Smart98's four layers: planning, execution,
-verification, recovery. Notice which layer is blank."
+verification, recovery. With ten runs, every layer found something. Now watch
+the gap feature:"
 
-**Show:** the layer bars; `recovery` is blank in the default run because no
-failure cluster was large enough to mine.
+**Show:** the layer bars — all four covered.
 
-**Say:** "A blank layer is not an error. It is the platform telling you where
-your practice has not yet produced knowledge. That gap is a feature."
+**Then say:** "If practice had been sparser — say, fewer than three identical
+failures — the recovery layer would show as *blank*. A blank layer is not an
+error. It is the platform telling you where your practice has not yet produced
+knowledge. That gap is a feature."
 
 ---
 
@@ -87,7 +93,8 @@ your practice has not yet produced knowledge. That gap is a feature."
 
 **Say:** "This is the whole loop Smart98 runs at platform scale: goals with
 criteria, agents that practice, rules mined from practice, humans who approve.
-Everything you just saw is in one folder, zero dependencies, one command."
+Everything you just saw is in one folder, zero runtime dependencies, one
+command."
 
 **Show:**
 
@@ -107,5 +114,6 @@ that prove themselves with evidence. Smart98 runs that loop for you."
 | --- | --- |
 | "Is the LLM in the loop?" | No — this demo is fully deterministic so results are reproducible on stage. The same engine wires to an LLM agent at platform level. |
 | "What if two rules conflict?" | They surface as separate candidates. Approval is human — conflicts get flagged for manual review, never auto-merged. |
-| "How does this scale?" | The store is an append-only log; reduction rebuilds state. Swap the JSONL file for Kafka/Session-Record and the model is unchanged. |
-| "Why does recovery stay blank?" | minSupport=3: we had 4 identical failures but the demo's signatures differ. Set `minSupport: 2` in `evolveNow()` to mine them live. |
+| "How does this scale?" | The store is an append-only log; reduction rebuilds state. Swap the JSONL file for Kafka and the model is unchanged. |
+| "How do I trigger a blank layer?" | The default run covers all four layers. Trim the practice set below three identical failures and the recovery layer goes blank — set `minSupport: 2` in `evolveNow()` to mine with less evidence. |
+| "Where is the dashboard?" | `dashboard/index.html` — open it, load `out/snapshot.json` (or use the embedded demo data) and you get the same story as the CLI, visually. |
