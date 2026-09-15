@@ -24,7 +24,7 @@ import {
   DomainError,
 } from '../src/domain.ts';
 import type { Domain } from '../src/domain.ts';
-import type { Goal } from '../src/goal.ts';
+import type { Goal } from '../src/types.ts';
 
 // ---------------------------------------------------------------- creation
 
